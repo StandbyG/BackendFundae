@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +16,9 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
+    public Optional<Usuario> findById(Integer id) {
+        return usuarioRepository.findById(id);
+    }
     public List<Usuario> getAllUsuarios() {
         return usuarioRepository.findAll();
     }

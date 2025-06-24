@@ -38,5 +38,6 @@ public class AjusteRazonable {
     private String estado; // valores: pendiente, implementado, en revisión
     @Column(name = "alertado", nullable = false)
     private boolean alertado = false;
-
+    @Transient
+    private Integer usuarioId;
 }

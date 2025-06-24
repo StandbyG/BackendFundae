@@ -19,8 +19,8 @@ public class AjusteRazonableService {
         return ajusteRepo.findAll();
     }
 
-    public List<AjusteRazonable> getByUsuario(Usuario usuario) {
-        return ajusteRepo.findByUsuario(usuario);
+    public List<AjusteRazonable> getByUsuarioId(Integer idUsuario) {
+        return ajusteRepo.findByUsuario_IdUsuario(idUsuario);
     }
 
     public AjusteRazonable getById(Integer id) {
@@ -38,5 +38,9 @@ public class AjusteRazonableService {
         }
         ajusteRepo.deleteById(id);
     }
+    public List<AjusteRazonable> getByEstado(String estado) {
+        return ajusteRepo.findByEstado(estado);
+    }
+
 }
 

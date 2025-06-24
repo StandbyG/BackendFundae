@@ -18,15 +18,17 @@ public class JwtUtil {
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
 
     // Genera el token JWT
-    public String generateToken(String correo, String rol) {
+    public String generateToken(String correo, String rol, Integer userId) {
         return Jwts.builder()
                 .setSubject(correo)
                 .claim("role", rol)
+                .claim("userId", userId)  // Añadimos el userId al token
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(secretKey)
                 .compact();
     }
+
 
     // Obtiene correo desde el token
     public String extractUsername(String token) {
