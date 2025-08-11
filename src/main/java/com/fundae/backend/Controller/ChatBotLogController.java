@@ -4,6 +4,8 @@ import com.fundae.backend.Model.ChatBotLog;
 import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Service.ChatBotLogService;
 import com.fundae.backend.Service.UsuarioService;
+import com.fundae.backend.dto.ChatBotLogCreateDTO;
+import com.fundae.backend.dto.ChatBotLogResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,23 +21,25 @@ public class ChatBotLogController {
     private final UsuarioService usuarioService;
 
     @GetMapping
-    public List<ChatBotLog> getAll() {
+    public List<ChatBotLogResponseDTO> getAll() {
         return logService.getAll();
     }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<ChatBotLog> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(logService.getById(id));
+    @GetMapping("/usuario/{usuarioId}")
+    public List<ChatBotLogResponseDTO> getByUsuarioId(@PathVariable Integer usuarioId) {
+        return logService.getByUsuarioId(usuarioId);
     }
 
-    @PostMapping
-    public ResponseEntity<ChatBotLog> create(@RequestBody ChatBotLog log) {
-        Usuario usuario = usuarioService.findById(log.getUsuarioId())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Asignar el usuario al ajuste
-        log.setUsuario(usuario);
-        return ResponseEntity.status(201).body(logService.save(log));
+    @PostMapping
+    public ResponseEntity<ChatBotLog> create(@RequestBody ChatBotLogCreateDTO logDTO) {
+        Usuario usuario = usuarioService.getUsuarioById(logDTO.getUsuarioId());
+
+        ChatBotLog newLog = new ChatBotLog();
+        newLog.setPregunta(logDTO.getPregunta());
+        newLog.setRespuesta(logDTO.getRespuesta());
+        newLog.setUsuario(usuario);
+
+        return ResponseEntity.status(201).body(logService.save(newLog));
     }
 
     @DeleteMapping("/{id}")

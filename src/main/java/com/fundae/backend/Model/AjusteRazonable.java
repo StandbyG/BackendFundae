@@ -18,8 +18,7 @@ public class AjusteRazonable {
     private Integer idAjuste;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false)
-    @JsonIgnore
+    @JoinColumn(name = "usuario_id",referencedColumnName = "id_usuario", nullable = false)
     private Usuario usuario;
 
     @Column(name = "tipo_ajuste", length = 100)
@@ -38,6 +37,5 @@ public class AjusteRazonable {
     private String estado; // valores: pendiente, implementado, en revisión
     @Column(name = "alertado", nullable = false)
     private boolean alertado = false;
-    @Transient
-    private Integer usuarioId;
+
 }

@@ -1,7 +1,9 @@
 package com.fundae.backend.auth;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -12,23 +14,29 @@ import java.util.function.Function;
 public class JwtUtil {
 
     // Clave secreta de 256 bits
-    private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    @Value("${jwt.secret.key}")
+    private String SECRET_KEY;
+
 
     // Tiempo de expiración: 1 día (en milisegundos)
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
+
+    private Key getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
     // Genera el token JWT
     public String generateToken(String correo, String rol, Integer userId) {
         return Jwts.builder()
                 .setSubject(correo)
                 .claim("role", rol)
-                .claim("userId", userId)  // Añadimos el userId al token
+                .claim("userId", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(secretKey)
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256) // 👈 Usa la clave correcta
                 .compact();
     }
-
 
     // Obtiene correo desde el token
     public String extractUsername(String token) {
@@ -55,12 +63,13 @@ public class JwtUtil {
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        return claimsResolver.apply(extractAllClaims(token));
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
     }
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
+                .setSigningKey(getSignInKey()) // 👈 Usa la clave correcta
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
