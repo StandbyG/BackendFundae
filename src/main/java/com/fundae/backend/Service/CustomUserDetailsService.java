@@ -19,6 +19,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByCorreo(correo)
                 .orElseThrow(() -> new UsernameNotFoundException("Correo no registrado: " + correo));
 
+        System.out.println("Rol del usuario desde la BD: '" + usuario.getTipoUsuario() + "'");
+
         return new User(usuario.getCorreo(), usuario.getContraseñaHash(),
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getTipoUsuario().toUpperCase())));
     }

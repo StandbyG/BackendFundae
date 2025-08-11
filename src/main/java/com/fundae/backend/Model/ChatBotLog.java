@@ -29,4 +29,6 @@ public class ChatBotLog {
     private String respuesta;
 
     private LocalDateTime fecha;
+    @Transient
+    private Integer usuarioId;
 }

@@ -18,8 +18,7 @@ public class AjusteRazonable {
     private Integer idAjuste;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false)
-    @JsonIgnore
+    @JoinColumn(name = "usuario_id",referencedColumnName = "id_usuario", nullable = false)
     private Usuario usuario;
 
     @Column(name = "tipo_ajuste", length = 100)

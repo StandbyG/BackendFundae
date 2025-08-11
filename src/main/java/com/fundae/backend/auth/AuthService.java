@@ -24,8 +24,8 @@ public class AuthService {
         Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        String token = jwtUtil.generateToken(usuario.getCorreo(), usuario.getTipoUsuario());
-        return new AuthResponse(token, usuario.getTipoUsuario());
+        String token = jwtUtil.generateToken(usuario.getCorreo(), usuario.getTipoUsuario(),usuario.getIdUsuario());
+        return new AuthResponse(token, usuario.getTipoUsuario(),usuario.getIdUsuario());
     }
 
     public Usuario registrar(AuthRequest request) {

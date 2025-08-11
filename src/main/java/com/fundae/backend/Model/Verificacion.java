@@ -30,4 +30,6 @@ public class Verificacion {
 
     @Column(length = 20)
     private String resultado; // valores: cumple, no cumple, parcial
+    @Transient
+    private Integer usuarioId;
 }

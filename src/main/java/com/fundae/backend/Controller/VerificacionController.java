@@ -1,6 +1,8 @@
 package com.fundae.backend.Controller;
 
+import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Model.Verificacion;
+import com.fundae.backend.Service.UsuarioService;
 import com.fundae.backend.Service.VerificacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import java.util.List;
 public class VerificacionController {
 
     private final VerificacionService verificacionService;
+    private final UsuarioService usuarioService;
 
     @GetMapping
     public List<Verificacion> getAll() {
@@ -27,6 +30,12 @@ public class VerificacionController {
 
     @PostMapping
     public ResponseEntity<Verificacion> create(@RequestBody Verificacion verificacion) {
+        // Obtener el usuario correspondiente al usuarioId
+        Usuario usuario = usuarioService.findById(verificacion.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Asignar el usuario al ajuste
+        verificacion.setUsuario(usuario);
         return ResponseEntity.status(201).body(verificacionService.save(verificacion));
     }
 
