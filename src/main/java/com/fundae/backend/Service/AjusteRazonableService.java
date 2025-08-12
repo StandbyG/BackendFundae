@@ -4,13 +4,11 @@ import com.fundae.backend.Exception.ResourceNotFoundException;
 import com.fundae.backend.Model.AjusteRazonable;
 import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Repository.AjusteRazonableRepository;
-import com.fundae.backend.dto.AjusteEstadoUpdateDTO;
-import com.fundae.backend.dto.AjusteRazonableResponseDTO;
-import com.fundae.backend.dto.AjusteRazonableUpdateDTO;
-import com.fundae.backend.dto.UsuarioDTO;
+import com.fundae.backend.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +17,7 @@ import java.util.stream.Collectors;
 public class AjusteRazonableService {
 
     private final AjusteRazonableRepository ajusteRepo;
+    private final UsuarioService usuarioService;
 
     public AjusteRazonableResponseDTO updateEstadoYFecha(Integer id, AjusteEstadoUpdateDTO dto) {
         // 1. Obtenemos la ENTIDAD real de la base de datos
@@ -33,6 +32,32 @@ public class AjusteRazonableService {
         // 4. Guardamos la entidad y devolvemos el DTO actualizado
         AjusteRazonable ajusteGuardado = ajusteRepo.save(ajusteExistente);
         return convertToDto(ajusteGuardado);
+    }
+
+    public List<AjusteRazonable> saveBulk(List<AjusteRazonableCreateDTO> ajustesDTO) {
+        // Asumimos que todos los ajustes del lote pertenecen al mismo usuario
+        if (ajustesDTO == null || ajustesDTO.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Obtenemos el usuario UNA SOLA VEZ
+        Integer usuarioId = ajustesDTO.get(0).getUsuarioId();
+        Usuario usuario = usuarioService.getUsuarioById(usuarioId);
+
+        // Convertimos la lista de DTOs a una lista de Entidades
+        List<AjusteRazonable> nuevosAjustes = ajustesDTO.stream().map(dto -> {
+            AjusteRazonable ajuste = new AjusteRazonable();
+            ajuste.setTipoAjuste(dto.getTipoAjuste());
+            ajuste.setDescripcion(dto.getDescripcion());
+            ajuste.setEstado(dto.getEstado());
+            ajuste.setFechaRecomendacion(dto.getFechaRecomendacion());
+            ajuste.setFechaImplementacion(dto.getFechaImplementacion());
+            ajuste.setUsuario(usuario); // Asignamos el mismo usuario a todos
+            return ajuste;
+        }).collect(Collectors.toList());
+
+        // Guardamos todas las entidades en una sola transacción
+        return ajusteRepo.saveAll(nuevosAjustes);
     }
     private AjusteRazonableResponseDTO convertToDto(AjusteRazonable ajuste) {
         AjusteRazonableResponseDTO dto = new AjusteRazonableResponseDTO();
