@@ -69,6 +69,11 @@ public class AjusteRazonableController {
         return ResponseEntity.ok(ajustes);
     }
 
+    @PostMapping("/create-bulk")
+    public ResponseEntity<List<AjusteRazonable>> createBulk(@RequestBody List<AjusteRazonableCreateDTO> ajustesDTO) {
+        List<AjusteRazonable> ajustesGuardados = ajusteService.saveBulk(ajustesDTO);
+        return ResponseEntity.status(201).body(ajustesGuardados);
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
