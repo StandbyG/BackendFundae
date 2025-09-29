@@ -12,5 +12,12 @@ public class AjusteRazonableResponseDTO {
     private LocalDate fechaImplementacion;
     private String estado;
     private boolean alertado;
-    private UsuarioDTO usuario; // Usará el DTO de usuario
+    private UsuarioDTO usuario;
+    private String origen;
+    private String ajustesSugeridos;
+    private String espacio;
+    private String refNormativa;
+    private String refFotografica;
+    private String dificultad;
+    private String urgencia;
 }

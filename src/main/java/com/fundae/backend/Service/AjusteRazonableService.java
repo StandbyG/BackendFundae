@@ -2,14 +2,21 @@ package com.fundae.backend.Service;
 
 import com.fundae.backend.Exception.ResourceNotFoundException;
 import com.fundae.backend.Model.AjusteRazonable;
+import com.fundae.backend.Model.OrigenAjuste;
 import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Repository.AjusteRazonableRepository;
-import com.fundae.backend.dto.*;
+import com.fundae.backend.dto.AjusteEstadoUpdateDTO;
+import com.fundae.backend.dto.AjusteRazonableCreateDTO;
+import com.fundae.backend.dto.AjusteRazonableOngCreateDTO;
+import com.fundae.backend.dto.AjusteRazonableResponseDTO;
+import com.fundae.backend.dto.AjusteRazonableMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,31 +27,18 @@ public class AjusteRazonableService {
     private final UsuarioService usuarioService;
 
     public AjusteRazonableResponseDTO updateEstadoYFecha(Integer id, AjusteEstadoUpdateDTO dto) {
-        // 1. Obtenemos la ENTIDAD real de la base de datos
         AjusteRazonable ajusteExistente = ajusteRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ajuste no encontrado con ID: " + id));
-
-
-        // 3. Actualizamos los campos permitidos
         ajusteExistente.setEstado(dto.getEstado());
         ajusteExistente.setFechaImplementacion(dto.getFechaImplementacion());
-
-        // 4. Guardamos la entidad y devolvemos el DTO actualizado
         AjusteRazonable ajusteGuardado = ajusteRepo.save(ajusteExistente);
-        return convertToDto(ajusteGuardado);
+        return AjusteRazonableMapper.toResponse(ajusteGuardado);
     }
 
     public List<AjusteRazonable> saveBulk(List<AjusteRazonableCreateDTO> ajustesDTO) {
-        // Asumimos que todos los ajustes del lote pertenecen al mismo usuario
-        if (ajustesDTO == null || ajustesDTO.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        // Obtenemos el usuario UNA SOLA VEZ
+        if (ajustesDTO == null || ajustesDTO.isEmpty()) return Collections.emptyList();
         Integer usuarioId = ajustesDTO.get(0).getUsuarioId();
         Usuario usuario = usuarioService.getUsuarioById(usuarioId);
-
-        // Convertimos la lista de DTOs a una lista de Entidades
         List<AjusteRazonable> nuevosAjustes = ajustesDTO.stream().map(dto -> {
             AjusteRazonable ajuste = new AjusteRazonable();
             ajuste.setTipoAjuste(dto.getTipoAjuste());
@@ -52,54 +46,30 @@ public class AjusteRazonableService {
             ajuste.setEstado(dto.getEstado());
             ajuste.setFechaRecomendacion(dto.getFechaRecomendacion());
             ajuste.setFechaImplementacion(dto.getFechaImplementacion());
-            ajuste.setUsuario(usuario); // Asignamos el mismo usuario a todos
+            ajuste.setUsuario(usuario);
             return ajuste;
         }).collect(Collectors.toList());
-
-        // Guardamos todas las entidades en una sola transacción
         return ajusteRepo.saveAll(nuevosAjustes);
     }
-    private AjusteRazonableResponseDTO convertToDto(AjusteRazonable ajuste) {
-        AjusteRazonableResponseDTO dto = new AjusteRazonableResponseDTO();
-        dto.setIdAjuste(ajuste.getIdAjuste());
-        dto.setTipoAjuste(ajuste.getTipoAjuste());
-        dto.setDescripcion(ajuste.getDescripcion());
-        dto.setEstado(ajuste.getEstado());
-        dto.setFechaRecomendacion(ajuste.getFechaRecomendacion());
-        dto.setFechaImplementacion(ajuste.getFechaImplementacion());
-        dto.setAlertado(ajuste.isAlertado());
 
-        // Mapear el usuario a su DTO
-        if (ajuste.getUsuario() != null) {
-            UsuarioDTO usuarioDto = new UsuarioDTO();
-            usuarioDto.setIdUsuario(ajuste.getUsuario().getIdUsuario());
-            usuarioDto.setNombre(ajuste.getUsuario().getNombre());
-            usuarioDto.setCorreo(ajuste.getUsuario().getCorreo());
-            usuarioDto.setNombreEmpresa(ajuste.getUsuario().getNombreEmpresa());
-            dto.setUsuario(usuarioDto);
-        }
-        return dto;
-    }
     public List<AjusteRazonableResponseDTO> getAll() {
-        return ajusteRepo.findAll()
-                .stream()
-                .map(this::convertToDto)
+        return ajusteRepo.findAll().stream()
+                .map(AjusteRazonableMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
     public List<AjusteRazonableResponseDTO> getByUsuarioId(Integer idUsuario) {
-        return ajusteRepo.findByUsuario_IdUsuario(idUsuario)
-                .stream()
-                .map(this::convertToDto)
+        return ajusteRepo.findByUsuario_IdUsuario(idUsuario).stream()
+                .map(AjusteRazonableMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public AjusteRazonableResponseDTO getById(Integer id) {
         AjusteRazonable ajuste = ajusteRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ajuste no encontrado con ID: " + id));
-
-        // Convierte la entidad encontrada a un DTO antes de devolverla
-        return convertToDto(ajuste);
+        return AjusteRazonableMapper.toResponse(ajuste);
     }
+
     public AjusteRazonable save(AjusteRazonable ajuste) {
         return ajusteRepo.save(ajuste);
     }
@@ -107,12 +77,28 @@ public class AjusteRazonableService {
     public void delete(Integer id) {
         AjusteRazonable ajusteExistente = ajusteRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ajuste no encontrado con ID: " + id));
-
-        ajusteRepo.deleteById(id);
+        ajusteRepo.deleteById(ajusteExistente.getIdAjuste());
     }
+
     public List<AjusteRazonable> getByEstado(String estado) {
         return ajusteRepo.findByEstado(estado);
     }
 
+    public AjusteRazonable crearDesdeOng(AjusteRazonableOngCreateDTO dto) {
+        Usuario usuario = usuarioService.getUsuarioById(dto.getUsuarioId());
+        AjusteRazonable ar = new AjusteRazonable();
+        ar.setUsuario(usuario);
+        ar.setOrigen(OrigenAjuste.ONG);
+        ar.setEspacio(dto.getEspacio());
+        ar.setObservacion(dto.getObservacion());
+        ar.setAjustesSugeridos(dto.getAjustesSugeridos());
+        ar.setRefNormativa(dto.getRefNormativa());
+        ar.setRefFotografica(dto.getRefFotografica());
+        ar.setDificultad(dto.getDificultad());
+        ar.setUrgencia(dto.getUrgencia());
+        ar.setEstado(Objects.requireNonNullElse(dto.getEstado(), "pendiente"));
+        if (dto.getFechaRecomendacion() != null) ar.setFechaRecomendacion(LocalDate.parse(dto.getFechaRecomendacion()));
+        if (dto.getFechaImplementacion() != null) ar.setFechaImplementacion(LocalDate.parse(dto.getFechaImplementacion()));
+        return ajusteRepo.save(ar);
+    }
 }
-
