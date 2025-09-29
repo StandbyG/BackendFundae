@@ -5,12 +5,10 @@ import com.fundae.backend.Model.AjusteRazonable;
 import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Service.AjusteRazonableService;
 import com.fundae.backend.Service.UsuarioService;
-import com.fundae.backend.dto.AjusteEstadoUpdateDTO;
-import com.fundae.backend.dto.AjusteRazonableCreateDTO;
-import com.fundae.backend.dto.AjusteRazonableResponseDTO;
-import com.fundae.backend.dto.AjusteRazonableUpdateDTO;
+import com.fundae.backend.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -88,6 +86,11 @@ public class AjusteRazonableController {
     ) {
         AjusteRazonableResponseDTO ajusteActualizado = ajusteService.updateEstadoYFecha(id, dto);
         return ResponseEntity.ok(ajusteActualizado);
+    }
+    @PostMapping("/ong")
+    @PreAuthorize("hasRole('ADMIN')") // o el rol que use la ONG
+    public ResponseEntity<AjusteRazonable> crearDesdeOng(@RequestBody AjusteRazonableOngCreateDTO dto) {
+        return ResponseEntity.status(201).body(ajusteService.crearDesdeOng(dto));
     }
 
 

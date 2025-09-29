@@ -29,7 +29,7 @@ public class Verificacion {
     private String observaciones;
 
     @Column(length = 20)
-    private String resultado; // valores: cumple, no cumple, parcial
+    private String resultado;
     @Transient
     private Integer usuarioId;
 }
