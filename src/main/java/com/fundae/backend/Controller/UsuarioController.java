@@ -2,6 +2,7 @@ package com.fundae.backend.Controller;
 
 import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Service.UsuarioService;
+import com.fundae.backend.dto.UsuarioUpdateDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,9 +32,8 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> update(@PathVariable Integer id, @RequestBody Usuario usuario) {
-        usuario.setIdUsuario(id);
-        return ResponseEntity.ok(usuarioService.saveUsuario(usuario));
+    public ResponseEntity<Usuario> update(@PathVariable Integer id, @RequestBody UsuarioUpdateDTO body) {
+        return ResponseEntity.ok(usuarioService.updatePerfil(id, body));
     }
 
     @DeleteMapping("/{id}")
