@@ -4,6 +4,7 @@ import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,20 +18,36 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public AuthResponse login(AuthRequest request) {
-        authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getCorreo(), request.getContraseña())
-        );
+        // 1) Autenticar (email + contraseña)
+        try {
+            authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getCorreo(), request.getContraseña()
+                    )
+            );
+        } catch (LockedException | DisabledException | CredentialsExpiredException | AccountExpiredException e) {
+            // Deja pasar estas para que tu GlobalExceptionHandler las convierta en 423/401/403 según corresponda
+            throw e;
+        } catch (AuthenticationException e) {
+            // Incluye BadCredentialsException: credenciales inválidas (401)
+            throw new BadCredentialsException("Credenciales inválidas.", e);
+        }
 
+        // 2) Buscar usuario; si no existe, también reporta 401 (no 500)
         Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas."));
 
-        String token = jwtUtil.generateToken(usuario.getCorreo(), usuario.getTipoUsuario(),usuario.getIdUsuario());
-        return new AuthResponse(token, usuario.getTipoUsuario(),usuario.getIdUsuario());
+        // 3) Generar token y responder
+        String token = jwtUtil.generateToken(
+                usuario.getCorreo(),
+                usuario.getTipoUsuario(),
+                usuario.getIdUsuario()
+        );
+        return new AuthResponse(token, usuario.getTipoUsuario(), usuario.getIdUsuario());
     }
 
     public Usuario registrar(AuthRequest request) {
         Usuario usuario = new Usuario();
-
         usuario.setCorreo(request.getCorreo());
         usuario.setContraseñaHash(passwordEncoder.encode(request.getContraseña()));
         usuario.setNombre(request.getNombre());
@@ -40,7 +57,6 @@ public class AuthService {
         usuario.setSector(request.getSector());
         usuario.setDireccion(request.getDireccion());
         usuario.setEstadoCumplimiento(request.getEstadoCumplimiento());
-
         return usuarioRepository.save(usuario);
     }
 }
