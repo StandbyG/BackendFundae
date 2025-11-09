@@ -1,11 +1,14 @@
 package com.fundae.backend.Service;
 
 
+import com.fundae.backend.Exception.EmailInUseException;
 import com.fundae.backend.Exception.ResourceNotFoundException;
 import com.fundae.backend.Model.Usuario;
 import com.fundae.backend.Repository.UsuarioRepository;
 import com.fundae.backend.dto.UsuarioUpdateDTO;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,8 +47,26 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
     }
 
+    @Transactional
     public Usuario updatePerfil(Integer id, UsuarioUpdateDTO dto) {
         Usuario u = getUsuarioOrThrow(id);
+
+        java.util.function.Function<String,String> norm =
+                s -> s == null ? null : s.trim();
+
+        if (dto.getCorreo() != null) {
+            String nuevoCorreo = norm.apply(dto.getCorreo()).toLowerCase();
+            String correoActual = u.getCorreo() == null ? null : u.getCorreo().trim().toLowerCase();
+
+            if (!nuevoCorreo.equals(correoActual)) {
+                boolean enUso = usuarioRepository.existsByCorreoIgnoreCaseAndIdUsuarioNot(nuevoCorreo, u.getIdUsuario());
+                if (enUso) {
+                    throw new EmailInUseException("El correo ya está en uso.");
+                }
+                u.setCorreo(nuevoCorreo);
+            }
+        }
+
         if (dto.getNombre() != null) u.setNombre(dto.getNombre());
         if (dto.getTipoUsuario() != null) u.setTipoUsuario(dto.getTipoUsuario());
         if (dto.getNombreEmpresa() != null) u.setNombreEmpresa(dto.getNombreEmpresa());
@@ -54,7 +75,11 @@ public class UsuarioService {
         if (dto.getDireccion() != null) u.setDireccion(dto.getDireccion());
         if (dto.getEstadoCumplimiento() != null) u.setEstadoCumplimiento(dto.getEstadoCumplimiento());
 
-        return usuarioRepository.save(u);
+        try {
+            return usuarioRepository.save(u);
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailInUseException("El correo ya está en uso.");
+        }
     }
 }
 
